@@ -1,32 +1,46 @@
 schema: spec-driven
 
-# Project context (optional)
-# This is shown to AI when creating artifacts.
-# Add your tech stack, conventions, style guides, domain knowledge, etc.
-# Example:
-#   context: |
-#     Tech stack: TypeScript, React, Node.js
-#     We use conventional commits
-#     Domain: e-commerce platform
+# Project context
+context: |
+  Aplicación: "Market List" — lista de mercado (compras de alacena, aseo, etc.)
+
+  Stack:
+    - Flutter 3.47 (stable), Dart SDK ^3.13.2
+    - Estado: flutter_riverpod 2.x (providers reactivos, notifier/stream)
+    - DB local: sqflite 2.x (SQLite) — 100% local, SIN uso de internet
+    - Migraciones DB: manuales via version + onUpgrade (SQL DDL)
+    - Navegación: go_router (rutas con parámetros: /lists/:id)
+    - Formatos: intl (moneda es_ES, ej. $1.234,56)
+
+  Entidades de dominio:
+    - Product: id, nombre, precio_unitario, tienda
+    - ShoppingList: id, tienda, fecha
+    - ShoppingListItem: id, id_lista, id_producto, cantidad
+    - Costo total de lista = sum(cantidad * precio_unitario)
+
+  Aplicación simplificada, solo en español. UI basada en Material Design
+  (sin paquetes visuales extra; solo stock de Flutter).
+
+  Convenciones:
+    - Sin dependencias de red (no http/dio)
+    - Palabras clave y nombres de pantallas en español (Productos, Listas)
+    - Tablas SQL en snake_case; modelos Dart en camelCase
 
 # Per-artifact rules (optional)
-# Add custom rules for specific artifacts.
-# Example:
-#   rules:
-#     proposal:
-#       - Keep proposals under 500 words
-#       - Always include a "Non-goals" section
-#     tasks:
-#       - Break tasks into chunks of max 2 hours
+rules:
+  proposal:
+    - No incluir dependencias de red ni servicios remotos (lógica 100% local)
+    - Todo cambio de esquema DB debe explicar su migración onUpgrade
+  tasks:
+    - Separar tareas por capa: datos (sqflite), estado (riverpod), UI/formularios.
+    - Incluir verificación con flutter analyze y flutter test por tarea
 
 # Per-operation guidance (optional)
-# Add advisory guidance for how apply and archive work should be conducted.
-# This is separate from artifact rules above.
-# Example:
-#   operations:
-#     apply:
-#       guidance:
-#         - Keep test summaries concise
-#     archive:
-#       guidance:
-#         - Summarize the archive outcome before finishing
+operations:
+  apply:
+    guidance:
+      - Tras cada tarea ejecutar flutter analyze y los tests
+      - No crear código de red ni dependencias nuevas sin justificación
+  archive:
+    guidance:
+      - Confirmar que la app compila y los tests pasan antes de archivar
