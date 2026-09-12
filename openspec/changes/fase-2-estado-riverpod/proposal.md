@@ -26,7 +26,7 @@ La fase 1 dejó la capa de datos (esquema SQLite + repositorio de productos con 
 ## Impact
 
 - **Nuevos archivos**: `lib/state/providers/database_provider.dart`, `lib/state/providers/product_provider.dart`, `lib/state/providers/shopping_list_provider.dart`, `lib/state/providers/shopping_list_item_provider.dart`, `lib/data/models/shopping_list.dart`, `lib/data/models/shopping_list_item.dart`, `lib/data/repositories/shopping_list_repository.dart` (más tests correspondientes).
-- **Modificados**: `lib/main.dart` (envuelto en `ProviderScope`, sin UI nueva).
+- **Modificados**: `lib/main.dart` (envuelto en `ProviderScope`, sin UI nueva) y `lib/data/repositories/product_repository.dart` (señal de cambio compartida por instancia de base, ver `design.md` decisión 2).
 - **Dependencias**: ninguna nueva (flutter_riverpod 2.6.1 ya está declarado; test en memoria con `sqflite_common_ffi` ya disponible como dev_dependency).
 - **Esquema DB**: sin cambios de esquema ni migración — las tablas ya existen desde v1.
 - **Sin red**: todo queda 100% local.

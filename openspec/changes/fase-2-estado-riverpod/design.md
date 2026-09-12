@@ -42,6 +42,7 @@ Fase 1 dejó: `AppDatabase` (singleton, 3 tablas v1, `PRAGMA foreign_keys = ON`)
 
 ### 2. Un solo repositorio para listas e ítems
 `ShoppingListRepository(db)` trata lista + ítems como un agregado: `insert(ShoppingList) -> int` (`lastInsertId`), `insertItem(ShoppingListItem) -> int`, `watchAll()` (listas) y `watchAllItems()` (todos los ítems). Un único `StreamController<void>.broadcast()` compartido: cualquier mutación re-emite ambos streams.
+- Señal de cambio compartida por base: el `StreamController` se comparte entre **todas las instancias de repositorio ligadas a la misma base** (clave por identidad del objeto `Database` mediante `Expando`). Así una mutación hecha desde cualquier instancia del repositorio (test o futura UI) refresca los streams que observa el provider, satisfaciendo el requisito de re-emisión de la capability `state` sin que sqflite provea streams nativos.
 - Alternativa: repos separados por entidad (descartada: ítems sin su lista no tienen dominio propio; mantener dos controladores duplica lógica sin beneficio).
 - Orden: listas por `fecha DESC` (las recientes primero); ítems por `id` (orden de inserción).
 - Sobre-consulta aceptada: una mutación de ítem re-emite también las listas; trivial para uso local de un solo usuario.
@@ -53,7 +54,7 @@ La columna `fecha` es `TEXT` y se persiste en ISO-8601; el modelo expone `DateTi
 `runApp(ProviderScope(child: MainApp()))`. El `MaterialApp` conserva su contenido actual; no hay pantallas de negocio todavía. Cumple el requisito "Inicialización de la capa de estado" del delta de `state`.
 
 ### 5. Repositorio construido dentro del provider
-Cada `StreamProvider` crea su repositorio con la DB resuelta. Cambiar la DB (solo ocurre al reabrir) reinicia los providers; los tests pueden `overrideWith` `databaseProvider` con una DB en memoria (`sqflite_common_ffi`), lo que hace la capa de estado testeable sin singletons.
+Cada `StreamProvider` crea su repositorio con la DB resuelta. Cambiar la DB (solo ocurre al reabrir) reinicia los providers; los tests pueden `overrideWith` `databaseProvider` con una DB en memoria (`sqflite_common_ffi`), lo que hace la capa de estado testeable sin singletons. Como la señal de cambio es compartida por base (decisión 2), los tests que mutan desde su propia instancia de repositorio refrescan igualmente los providers.
 
 ## Risks / Trade-offs
 
