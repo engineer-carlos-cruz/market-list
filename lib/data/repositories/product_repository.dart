@@ -5,12 +5,22 @@ import 'package:sqflite/sqflite.dart';
 import '../models/product.dart';
 
 class ProductRepository {
-  ProductRepository(this._db);
+  ProductRepository(this._db) : _changes = _changesFor(_db);
 
   final Database _db;
 
-  final StreamController<void> _changes =
-      StreamController<void>.broadcast();
+  static final Expando<StreamController<void>> _changesByDatabase =
+      Expando<StreamController<void>>('product_changes');
+
+  final StreamController<void> _changes;
+
+  static StreamController<void> _changesFor(Database db) {
+    final existing = _changesByDatabase[db];
+    if (existing != null) return existing;
+    final changes = StreamController<void>.broadcast();
+    _changesByDatabase[db] = changes;
+    return changes;
+  }
 
   Future<int> insert(Product product) async {
     final id = await _db
