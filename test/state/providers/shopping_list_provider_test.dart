@@ -65,7 +65,7 @@ void main() {
     expect(values.last.map((l) => l.tienda), contains('Mercado Central'));
   });
 
-  test('ítems: emite el estado inicial y se refresca tras alta de ítem',
+  test('ítems: emite el estado inicial y se refresca tras alta y actualización',
       () async {
     final container = createTestContainer(db);
     final values = <List<ShoppingListItem>>[];
@@ -80,7 +80,7 @@ void main() {
     ));
     final idProducto = await insertProduct('Leche');
 
-    await repo.insertItem(ShoppingListItem(
+    final id = await repo.insertItem(ShoppingListItem(
       idLista: idLista,
       idProducto: idProducto,
       cantidad: 2,
@@ -92,7 +92,8 @@ void main() {
     );
     expect(values.last.map((i) => i.cantidad), contains(2));
 
-    await repo.insertItem(ShoppingListItem(
+    await repo.updateItem(ShoppingListItem(
+      id: id,
       idLista: idLista,
       idProducto: idProducto,
       cantidad: 4,
@@ -100,8 +101,8 @@ void main() {
     await waitForValues(
       values,
       (v) => v.last.map((i) => i.cantidad).contains(4),
-      message: 'Timeout esperando emisión con el segundo ítem',
+      message: 'Timeout esperando emisión con la cantidad actualizada',
     );
-    expect(values.last.map((i) => i.cantidad), [2, 4]);
+    expect(values.last.map((i) => i.cantidad), [4]);
   });
 }

@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:market_list/data/models/list_line.dart';
 import 'package:market_list/data/models/product.dart';
 import 'package:market_list/data/models/shopping_list.dart';
 import 'package:market_list/data/models/shopping_list_item.dart';
@@ -55,6 +56,13 @@ void main() {
     );
   }
 
+  Future<int> insertLista() {
+    return repo.insert(ShoppingList(
+      tienda: 'Mercado Central',
+      fecha: DateTime(2026, 9, 11),
+    ));
+  }
+
   group('insert', () {
     test('devuelve un id único y persiste la lista', () async {
       final id = await repo.insert(ShoppingList(
@@ -79,10 +87,8 @@ void main() {
   group('insertItem', () {
     test('persiste el ítem con FK válido y cantidad positiva, devolviendo su id', () async {
       final idProducto = await insertProduct('Leche');
-      final idLista = await repo.insert(ShoppingList(
-        tienda: 'Mercado Central',
-        fecha: DateTime(2026, 9, 11),
-      ));
+      final idProducto2 = await insertProduct('Pan');
+      final idLista = await insertLista();
 
       final id = await repo.insertItem(ShoppingListItem(
         idLista: idLista,
@@ -91,7 +97,7 @@ void main() {
       ));
       final id2 = await repo.insertItem(ShoppingListItem(
         idLista: idLista,
-        idProducto: idProducto,
+        idProducto: idProducto2,
         cantidad: 1,
       ));
 
@@ -107,10 +113,7 @@ void main() {
     });
 
     test('rechaza un ítem con FK inexistente', () async {
-      final idLista = await repo.insert(ShoppingList(
-        tienda: 'Mercado Central',
-        fecha: DateTime(2026, 9, 11),
-      ));
+      final idLista = await insertLista();
 
       await expectLater(
         repo.insertItem(ShoppingListItem(
@@ -120,6 +123,47 @@ void main() {
         )),
         throwsA(isA<DatabaseException>()),
       );
+    });
+
+    test('rechaza duplicar el mismo producto en la misma lista sin insertar', () async {
+      final idProducto = await insertProduct('Leche');
+      final idLista = await insertLista();
+
+      await repo.insertItem(ShoppingListItem(
+        idLista: idLista,
+        idProducto: idProducto,
+        cantidad: 2,
+      ));
+
+      await expectLater(
+        repo.insertItem(ShoppingListItem(
+          idLista: idLista,
+          idProducto: idProducto,
+          cantidad: 3,
+        )),
+        throwsA(isA<ArgumentError>()),
+      );
+
+      final rows = await db.query('shopping_list_items');
+      expect(rows, hasLength(1));
+      expect(rows.single['cantidad'], 2);
+    });
+
+    test('rechaza cantidades no positivas sin insertar', () async {
+      final idProducto = await insertProduct('Leche');
+      final idLista = await insertLista();
+
+      await expectLater(
+        repo.insertItem(ShoppingListItem(
+          idLista: idLista,
+          idProducto: idProducto,
+          cantidad: 0,
+        )),
+        throwsA(isA<ArgumentError>()),
+      );
+
+      final rows = await db.query('shopping_list_items');
+      expect(rows, isEmpty);
     });
   });
 
@@ -177,14 +221,16 @@ void main() {
   group('watchAllItems', () {
     test('emite el estado inicial con todos los ítems ordenados por id', () async {
       await repo.insert(ShoppingList(tienda: 'Mercado', fecha: DateTime(2026, 9, 11)));
-      final idProducto = await insertProduct('Leche');
+      final idLeche = await insertProduct('Leche');
+      final idPan = await insertProduct('Pan');
+      final idJugo = await insertProduct('Jugo');
       final lists = await db.query('shopping_lists');
       final idLista = lists.first['id'] as int;
 
       final items = [
-        ShoppingListItem(idLista: idLista, idProducto: idProducto, cantidad: 1),
-        ShoppingListItem(idLista: idLista, idProducto: idProducto, cantidad: 5),
-        ShoppingListItem(idLista: idLista, idProducto: idProducto, cantidad: 2),
+        ShoppingListItem(idLista: idLista, idProducto: idLeche, cantidad: 1),
+        ShoppingListItem(idLista: idLista, idProducto: idPan, cantidad: 5),
+        ShoppingListItem(idLista: idLista, idProducto: idJugo, cantidad: 2),
       ];
       for (final item in items) {
         await repo.insertItem(item);
@@ -213,6 +259,7 @@ void main() {
         fecha: DateTime(2026, 9, 11),
       ));
       final idProducto = await insertProduct('Leche');
+      final idProducto2 = await insertProduct('Pan');
 
       await repo.insertItem(ShoppingListItem(
         idLista: idLista,
@@ -227,7 +274,7 @@ void main() {
 
       await repo.insertItem(ShoppingListItem(
         idLista: idLista,
-        idProducto: idProducto,
+        idProducto: idProducto2,
         cantidad: 4,
       ));
       await _waitForCondition(
@@ -236,6 +283,306 @@ void main() {
         message: 'Timeout esperando emisión con dos ítems',
       );
       expect(events.last.map((i) => i.cantidad), [2, 4]);
+    });
+  });
+
+  group('updateItem', () {
+    test('actualiza la cantidad conservando el id y las referencias', () async {
+      final idProducto = await insertProduct('Leche');
+      final idLista = await insertLista();
+      final id = await repo.insertItem(ShoppingListItem(
+        idLista: idLista,
+        idProducto: idProducto,
+        cantidad: 1,
+      ));
+
+      await repo.updateItem(ShoppingListItem(
+        id: id,
+        idLista: idLista,
+        idProducto: idProducto,
+        cantidad: 4,
+      ));
+
+      final rows = await db.query(
+        'shopping_list_items',
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+      expect(rows.single['cantidad'], 4);
+      expect(rows.single['id_lista'], idLista);
+      expect(rows.single['id_producto'], idProducto);
+    });
+
+    test('rechaza cantidades no positivas y conserva la cantidad anterior', () async {
+      final idProducto = await insertProduct('Leche');
+      final idLista = await insertLista();
+      final id = await repo.insertItem(ShoppingListItem(
+        idLista: idLista,
+        idProducto: idProducto,
+        cantidad: 2,
+      ));
+
+      await expectLater(
+        repo.updateItem(ShoppingListItem(
+          id: id,
+          idLista: idLista,
+          idProducto: idProducto,
+          cantidad: 0,
+        )),
+        throwsA(isA<ArgumentError>()),
+      );
+
+      final rows = await db.query(
+        'shopping_list_items',
+        where: 'id = ?',
+        whereArgs: [id],
+      );
+      expect(rows.single['cantidad'], 2);
+    });
+
+    test('re-emite los streams de listas e ítems', () async {
+      final events = <List<ShoppingListItem>>[];
+      final sub = repo.watchAllItems().listen(events.add);
+      addTearDown(sub.cancel);
+
+      await _waitForEvents(events, 1);
+      expect(events.first, isEmpty);
+
+      final idProducto = await insertProduct('Leche');
+      final idLista = await insertLista();
+      final id = await repo.insertItem(ShoppingListItem(
+        idLista: idLista,
+        idProducto: idProducto,
+        cantidad: 2,
+      ));
+      await _waitForCondition(
+        () => events.length >= 2 && events.last.isNotEmpty,
+        message: 'Timeout esperando emisión con el ítem',
+      );
+
+      await repo.updateItem(ShoppingListItem(
+        id: id,
+        idLista: idLista,
+        idProducto: idProducto,
+        cantidad: 5,
+      ));
+      await _waitForCondition(
+        () => events.last.map((i) => i.cantidad).toList().length == 1 &&
+            events.last.single.cantidad == 5,
+        message: 'Timeout esperando emisión con la cantidad actualizada',
+      );
+      expect(events.last.single.cantidad, 5);
+    });
+  });
+
+  group('removeItem', () {
+    test('elimina el ítem conservando lista y producto', () async {
+      final idProducto = await insertProduct('Leche');
+      final idLista = await insertLista();
+      final id = await repo.insertItem(ShoppingListItem(
+        idLista: idLista,
+        idProducto: idProducto,
+        cantidad: 2,
+      ));
+
+      await repo.removeItem(id);
+
+      final items = await db.query('shopping_list_items');
+      expect(items, isEmpty);
+
+      final listas = await db.query('shopping_lists');
+      expect(listas, hasLength(1));
+      final productos = await db.query('products');
+      expect(productos, hasLength(1));
+    });
+
+    test('re-emite streams tras el borrado', () async {
+      final events = <List<ShoppingListItem>>[];
+      final sub = repo.watchAllItems().listen(events.add);
+      addTearDown(sub.cancel);
+      await _waitForEvents(events, 1);
+
+      final idProducto = await insertProduct('Leche');
+      final idLista = await insertLista();
+      final id = await repo.insertItem(ShoppingListItem(
+        idLista: idLista,
+        idProducto: idProducto,
+        cantidad: 2,
+      ));
+      await _waitForCondition(
+        () => events.length >= 2 && events.last.isNotEmpty,
+        message: 'Timeout esperando emisión con el ítem',
+      );
+
+      await repo.removeItem(id);
+      await _waitForCondition(
+        () => events.length >= 3 && events.last.isEmpty,
+        message: 'Timeout esperando emisión sin ítems',
+      );
+      expect(events.last, isEmpty);
+    });
+  });
+
+  group('watchListDetail', () {
+    test('emite las líneas con producto, ordenadas por nombre', () async {
+      final idLeche = await insertProduct('Leche');
+      final idArroz = await insertProduct('Arroz');
+      final idLista = await insertLista();
+      final idLecheItem = await repo.insertItem(ShoppingListItem(
+        idLista: idLista,
+        idProducto: idLeche,
+        cantidad: 2,
+      ));
+      final idArrozItem = await repo.insertItem(ShoppingListItem(
+        idLista: idLista,
+        idProducto: idArroz,
+        cantidad: 1,
+      ));
+
+      final events = <List<ListLine>>[];
+      final sub = repo.watchListDetail(idLista).listen(events.add);
+      addTearDown(sub.cancel);
+
+      await _waitForEvents(events, 1);
+      expect(events.first.map((l) => l.nombre), ['Arroz', 'Leche']);
+      expect(events.first[0].precioUnitario, 10);
+      expect(events.first[0].id, idArrozItem);
+      expect(events.first[1].id, idLecheItem);
+      expect(events.first[1].cantidad, 2);
+    });
+
+    test('incluye productos deshabilitados con su nombre y precio', () async {
+      final idLeche = await insertProduct('Leche');
+      final idLista = await insertLista();
+      await repo.insertItem(ShoppingListItem(
+        idLista: idLista,
+        idProducto: idLeche,
+        cantidad: 2,
+      ));
+
+      await ProductRepository(db).disable(idLeche);
+
+      final events = <List<ListLine>>[];
+      final sub = repo.watchListDetail(idLista).listen(events.add);
+      addTearDown(sub.cancel);
+
+      await _waitForEvents(events, 1);
+      expect(events.first, hasLength(1));
+      expect(events.first.single.nombre, 'Leche');
+      expect(events.first.single.activo, isFalse);
+    });
+
+    test('se refresca ante mutaciones de ítem de esa lista', () async {
+      final idProducto = await insertProduct('Leche');
+      final idLista = await insertLista();
+      final id = await repo.insertItem(ShoppingListItem(
+        idLista: idLista,
+        idProducto: idProducto,
+        cantidad: 1,
+      ));
+
+      final events = <List<ListLine>>[];
+      final sub = repo.watchListDetail(idLista).listen(events.add);
+      addTearDown(sub.cancel);
+      await _waitForEvents(events, 1);
+
+      await repo.updateItem(ShoppingListItem(
+        id: id,
+        idLista: idLista,
+        idProducto: idProducto,
+        cantidad: 3,
+      ));
+      await _waitForCondition(
+        () => events.length >= 2 && events.last.single.cantidad == 3,
+        message: 'Timeout esperando emisión con cantidad actualizada',
+      );
+
+      await repo.removeItem(id);
+      await _waitForCondition(
+        () => events.length >= 3 && events.last.isEmpty,
+        message: 'Timeout esperando emisión sin ítems',
+      );
+      expect(events.last, isEmpty);
+    });
+
+    test('se refresca ante cambios de producto del catálogo', () async {
+      final idProducto = await insertProduct('Leche');
+      final idLista = await insertLista();
+      await repo.insertItem(ShoppingListItem(
+        idLista: idLista,
+        idProducto: idProducto,
+        cantidad: 2,
+      ));
+
+      final events = <List<ListLine>>[];
+      final sub = repo.watchListDetail(idLista).listen(events.add);
+      addTearDown(sub.cancel);
+      await _waitForEvents(events, 1);
+
+      await ProductRepository(db).update(Product(
+        id: idProducto,
+        nombre: 'Leche',
+        precioUnitario: 15,
+        tienda: 'Tienda A',
+      ));
+      await _waitForCondition(
+        () => events.length >= 2 && events.last.single.precioUnitario == 15,
+        message: 'Timeout esperando emisión con el precio actualizado',
+      );
+      expect(events.last.single.precioUnitario, 15);
+    });
+  });
+
+  group('watchStores', () {
+    test('emite tiendas distintas ordenadas sin repetidos', () async {
+      final prodRepo = ProductRepository(db);
+      await prodRepo.insert(const Product(
+        nombre: 'Leche',
+        precioUnitario: 10,
+        tienda: 'Mercado Central',
+      ));
+      await prodRepo.insert(const Product(
+        nombre: 'Pan',
+        precioUnitario: 5,
+        tienda: 'Feria',
+      ));
+      await prodRepo.insert(const Product(
+        nombre: 'Jugo',
+        precioUnitario: 8,
+        tienda: 'Mercado Central',
+      ));
+
+      final events = <List<String>>[];
+      final sub = repo.watchStores().listen(events.add);
+      addTearDown(sub.cancel);
+
+      await _waitForEvents(events, 1);
+      expect(events.first, ['Feria', 'Mercado Central']);
+    });
+
+    test('se refresca ante cambios del catálogo', () async {
+      final prodRepo = ProductRepository(db);
+      await prodRepo.insert(const Product(
+        nombre: 'Leche',
+        precioUnitario: 10,
+        tienda: 'Mercado Central',
+      ));
+
+      final events = <List<String>>[];
+      final sub = repo.watchStores().listen(events.add);
+      addTearDown(sub.cancel);
+      await _waitForEvents(events, 1);
+
+      await prodRepo.insert(const Product(
+        nombre: 'Pan',
+        precioUnitario: 5,
+        tienda: 'Bodega Sur',
+      ));
+      await _waitForCondition(
+        () => events.length >= 2 && events.last.contains('Bodega Sur'),
+        message: 'Timeout esperando emisión con la tienda nueva',
+      );
+      expect(events.last, ['Bodega Sur', 'Mercado Central']);
     });
   });
 }
