@@ -1,17 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 
 import '../../data/models/product.dart';
 import '../../data/repositories/product_repository.dart';
 import '../../state/providers/database_provider.dart';
 import '../../state/providers/product_provider.dart';
+import '../formatos.dart';
 
-String formatPrecio(Product producto) {
-  final formato = NumberFormat('#,##0.00', 'es_ES');
-  return '\$${formato.format(producto.precioUnitario)}';
-}
+String formatPrecio(Product producto) => formatoMoneda(producto.precioUnitario);
 
 class ProductosScreen extends ConsumerWidget {
   const ProductosScreen({super.key});
