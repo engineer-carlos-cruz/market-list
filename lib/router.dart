@@ -10,6 +10,10 @@ import 'ui/productos/productos_screen.dart';
 
 final appRouter = GoRouter(
   initialLocation: '/productos',
+  redirect: (context, state) {
+    if (state.matchedLocation == '/') return '/listas';
+    return null;
+  },
   routes: [
     StatefulShellRoute.indexedStack(
       builder: (context, state, navigationShell) =>
