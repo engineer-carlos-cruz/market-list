@@ -7,6 +7,7 @@ import '../../data/repositories/product_repository.dart';
 import '../../state/providers/database_provider.dart';
 import '../../state/providers/product_provider.dart';
 import '../formatos.dart';
+import '../widgets/logout_action_button.dart';
 
 String formatPrecio(Product producto) => formatoMoneda(producto.precioUnitario);
 
@@ -17,8 +18,12 @@ class ProductosScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final productosAsync = ref.watch(productProvider);
     return Scaffold(
-      appBar: AppBar(title: const Text('Productos')),
+      appBar: AppBar(
+        title: const Text('Productos'),
+        actions: const [LogoutActionButton()],
+      ),
       floatingActionButton: FloatingActionButton(
+        heroTag: 'fab-productos',
         onPressed: () => context.push('/productos/nuevo'),
         tooltip: 'Nuevo producto',
         child: const Icon(Icons.add),

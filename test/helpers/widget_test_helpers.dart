@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:market_list/data/database/app_database.dart';
 import 'package:market_list/router.dart';
+import 'package:market_list/state/providers/auth_provider.dart';
 import 'package:market_list/state/providers/database_provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
@@ -35,11 +36,17 @@ Finder destinoListas() => find.descendant(
 
 Future<ProviderScope> pumpAppWithDb(
   WidgetTester tester,
-  Database db,
-) async {
+  Database db, {
+  bool autenticado = true,
+}) async {
   await initializeDateFormatting('es_ES');
   final scope = ProviderScope(
-    overrides: [databaseProvider.overrideWith((ref) async => db)],
+    overrides: [
+      databaseProvider.overrideWith((ref) async => db),
+      authProvider.overrideWith(
+        () => AuthNotifier(sesionInicial: autenticado),
+      ),
+    ],
     child: MaterialApp.router(
       routerConfig: appRouter,
       theme: ThemeData(

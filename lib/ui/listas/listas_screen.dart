@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../data/models/shopping_list.dart';
 import '../../state/providers/shopping_list_provider.dart';
 import '../formatos.dart';
+import '../widgets/logout_action_button.dart';
 
 class ListasScreen extends ConsumerWidget {
   const ListasScreen({super.key});
@@ -13,8 +14,12 @@ class ListasScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final listasAsync = ref.watch(shoppingListProvider);
     return Scaffold(
-      appBar: AppBar(title: const Text('Listas')),
+      appBar: AppBar(
+        title: const Text('Listas'),
+        actions: const [LogoutActionButton()],
+      ),
       floatingActionButton: FloatingActionButton(
+        heroTag: 'fab-listas',
         onPressed: () => context.push('/listas/nueva'),
         tooltip: 'Nueva lista',
         child: const Icon(Icons.add),

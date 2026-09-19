@@ -1,20 +1,35 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'state/providers/auth_provider.dart';
 import 'ui/listas/agregar_producto_screen.dart';
 import 'ui/listas/crear_lista_screen.dart';
 import 'ui/listas/lista_detalle_screen.dart';
 import 'ui/listas/listas_screen.dart';
+import 'ui/login/login_screen.dart';
 import 'ui/productos/producto_form_screen.dart';
 import 'ui/productos/productos_screen.dart';
 
 final appRouter = GoRouter(
   initialLocation: '/productos',
   redirect: (context, state) {
-    if (state.matchedLocation == '/') return '/listas';
+    final autenticado =
+        ProviderScope.containerOf(context, listen: false).read(authProvider);
+    final destino = state.matchedLocation;
+    if (!autenticado) {
+      if (destino == '/login') return null;
+      return '/login';
+    }
+    if (destino == '/login' || destino == '/') return '/listas';
     return null;
   },
   routes: [
+    GoRoute(
+      path: '/login',
+      name: 'login',
+      builder: (context, state) => const LoginScreen(),
+    ),
     StatefulShellRoute.indexedStack(
       builder: (context, state, navigationShell) =>
           _ShellScaffold(navigationShell: navigationShell),
