@@ -7,6 +7,7 @@ import '../../data/repositories/product_repository.dart';
 import '../../state/providers/database_provider.dart';
 import '../../state/providers/product_provider.dart';
 import '../formatos.dart';
+import '../widgets/alacena_logo.dart';
 import '../widgets/logout_action_button.dart';
 
 String formatPrecio(Product producto) => formatoMoneda(producto.precioUnitario);
@@ -56,11 +57,7 @@ class _EstadoVacio extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.inventory_2_outlined,
-              size: 56,
-              color: theme.colorScheme.outline,
-            ),
+            AlacenaLogo(size: 64),
             const SizedBox(height: 16),
             Text(
               'Aún no hay productos',

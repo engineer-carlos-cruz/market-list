@@ -61,7 +61,6 @@ class _AgregarProductoScreenState extends ConsumerState<AgregarProductoScreen> {
               decoration: const InputDecoration(
                 labelText: 'Buscar producto',
                 prefixIcon: Icon(Icons.search),
-                border: OutlineInputBorder(),
               ),
             ),
           ),

@@ -6,6 +6,7 @@ import 'package:market_list/data/models/shopping_list_item.dart';
 import 'package:market_list/data/repositories/product_repository.dart';
 import 'package:market_list/data/repositories/shopping_list_repository.dart';
 import 'package:market_list/ui/productos/productos_screen.dart';
+import 'package:market_list/ui/widgets/alacena_logo.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../helpers/widget_test_helpers.dart';
@@ -52,7 +53,7 @@ void main() {
       await pumpWithDb(tester, db, const ProductosScreen());
 
       expect(find.text('Aún no hay productos'), findsOneWidget);
-      expect(find.byIcon(Icons.inventory_2_outlined), findsOneWidget);
+      expect(find.byType(AlacenaLogo), findsOneWidget);
     });
 
     testWidgets('el FAB conduce al formulario de alta', (tester) async {

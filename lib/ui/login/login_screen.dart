@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../state/providers/auth_provider.dart';
+import '../widgets/alacena_logo.dart';
+import '../widgets/glass.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -52,69 +54,72 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(32),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Icon(
-                    Icons.shopping_cart_outlined,
-                    size: 56,
-                    color: theme.colorScheme.primary,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Market List',
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.headlineSmall,
-                  ),
-                  const SizedBox(height: 32),
-                  TextFormField(
-                    key: const Key('campo-usuario'),
-                    controller: _usuarioController,
-                    decoration: const InputDecoration(
-                      labelText: 'Usuario',
-                      border: OutlineInputBorder(),
-                    ),
-                    textInputAction: TextInputAction.next,
-                    validator: _validarUsuario,
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    key: const Key('campo-password'),
-                    controller: _passwordController,
-                    obscureText: !_passwordVisible,
-                    decoration: InputDecoration(
-                      labelText: 'Contraseña',
-                      border: const OutlineInputBorder(),
-                      suffixIcon: IconButton(
-                        tooltip: _passwordVisible
-                            ? 'Ocultar contraseña'
-                            : 'Mostrar contraseña',
-                        icon: Icon(
-                          _passwordVisible
-                              ? Icons.visibility_off
-                              : Icons.visibility,
+      body: DecoratedBackground(
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: GlassCard(
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const AlacenaLogo(size: 76),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Market List',
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
                         ),
-                        onPressed: () =>
-                            setState(() => _passwordVisible = !_passwordVisible),
                       ),
-                    ),
-                    textInputAction: TextInputAction.done,
-                    onFieldSubmitted: (_) => _ingresar(),
-                    validator: _validarPassword,
+                      const SizedBox(height: 32),
+                      TextFormField(
+                        key: const Key('campo-usuario'),
+                        controller: _usuarioController,
+                        decoration: const InputDecoration(
+                          labelText: 'Usuario',
+                          prefixIcon: Icon(Icons.person_outline),
+                        ),
+                        textInputAction: TextInputAction.next,
+                        validator: _validarUsuario,
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        key: const Key('campo-password'),
+                        controller: _passwordController,
+                        obscureText: !_passwordVisible,
+                        decoration: InputDecoration(
+                          labelText: 'Contraseña',
+                          prefixIcon: const Icon(Icons.lock_outline),
+                          suffixIcon: IconButton(
+                            tooltip: _passwordVisible
+                                ? 'Ocultar contraseña'
+                                : 'Mostrar contraseña',
+                            icon: Icon(
+                              _passwordVisible
+                                  ? Icons.visibility_off
+                                  : Icons.visibility,
+                            ),
+                            onPressed: () => setState(
+                              () => _passwordVisible = !_passwordVisible,
+                            ),
+                          ),
+                        ),
+                        textInputAction: TextInputAction.done,
+                        onFieldSubmitted: (_) => _ingresar(),
+                        validator: _validarPassword,
+                      ),
+                      const SizedBox(height: 24),
+                      FilledButton(
+                        onPressed: _ingresar,
+                        child: const Text('Ingresar'),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 24),
-                  FilledButton(
-                    onPressed: _ingresar,
-                    child: const Text('Ingresar'),
-                  ),
-                ],
+                ),
               ),
             ),
           ),

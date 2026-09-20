@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 import 'router.dart';
+import 'ui/theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,9 +19,7 @@ class MainApp extends StatelessWidget {
     return MaterialApp.router(
       routerConfig: appRouter,
       title: 'Market List',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
-      ),
+      theme: buildMarketListTheme(),
     );
   }
 }

@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/intl.dart';
 import 'package:market_list/data/models/shopping_list.dart';
 import 'package:market_list/data/repositories/shopping_list_repository.dart';
+import 'package:market_list/ui/widgets/alacena_logo.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../helpers/widget_test_helpers.dart';
@@ -38,7 +39,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Aún no hay listas'), findsOneWidget);
-      expect(find.byIcon(Icons.shopping_cart_outlined), findsOneWidget);
+      expect(find.byType(AlacenaLogo), findsOneWidget);
     });
   });
 

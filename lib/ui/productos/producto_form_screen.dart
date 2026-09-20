@@ -121,7 +121,6 @@ class _ProductoFormScreenState extends ConsumerState<ProductoFormScreen> {
                 controller: _nombreController,
                 decoration: const InputDecoration(
                   labelText: 'Nombre',
-                  border: OutlineInputBorder(),
                 ),
                 textInputAction: TextInputAction.next,
                 validator: _validarNombre,
@@ -132,7 +131,6 @@ class _ProductoFormScreenState extends ConsumerState<ProductoFormScreen> {
                 controller: _precioController,
                 decoration: const InputDecoration(
                   labelText: 'Precio unitario',
-                  border: OutlineInputBorder(),
                 ),
                 keyboardType:
                     const TextInputType.numberWithOptions(decimal: true),
@@ -148,7 +146,6 @@ class _ProductoFormScreenState extends ConsumerState<ProductoFormScreen> {
                 controller: _tiendaController,
                 decoration: const InputDecoration(
                   labelText: 'Tienda',
-                  border: OutlineInputBorder(),
                 ),
                 textInputAction: TextInputAction.done,
                 onFieldSubmitted: (_) => _guardar(),

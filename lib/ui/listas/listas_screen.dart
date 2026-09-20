@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../data/models/shopping_list.dart';
 import '../../state/providers/shopping_list_provider.dart';
 import '../formatos.dart';
+import '../widgets/alacena_logo.dart';
 import '../widgets/logout_action_button.dart';
 
 class ListasScreen extends ConsumerWidget {
@@ -52,11 +53,7 @@ class _EstadoVacio extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.shopping_cart_outlined,
-              size: 56,
-              color: theme.colorScheme.outline,
-            ),
+            AlacenaLogo(size: 64),
             const SizedBox(height: 16),
             Text(
               'Aún no hay listas',

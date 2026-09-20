@@ -6,6 +6,7 @@ import 'package:market_list/data/database/app_database.dart';
 import 'package:market_list/router.dart';
 import 'package:market_list/state/providers/auth_provider.dart';
 import 'package:market_list/state/providers/database_provider.dart';
+import 'package:market_list/ui/theme.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 Future<Database> openInMemoryDatabaseForWidgets() {
@@ -22,7 +23,10 @@ Future<ProviderScope> pumpWithDb(
   await initializeDateFormatting('es_ES');
   final scope = ProviderScope(
     overrides: [databaseProvider.overrideWith((ref) async => db)],
-    child: MaterialApp(home: child),
+    child: MaterialApp(
+      theme: buildMarketListTheme(),
+      home: child,
+    ),
   );
   await tester.pumpWidget(scope);
   await tester.pumpAndSettle();
@@ -49,9 +53,7 @@ Future<ProviderScope> pumpAppWithDb(
     ],
     child: MaterialApp.router(
       routerConfig: appRouter,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
-      ),
+      theme: buildMarketListTheme(),
     ),
   );
   await tester.pumpWidget(scope);
