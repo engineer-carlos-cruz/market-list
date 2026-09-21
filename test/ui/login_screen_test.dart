@@ -49,17 +49,24 @@ void main() {
       expect(find.byType(ListasScreen), findsOneWidget);
     });
 
-    testWidgets('credenciales inválidas muestran SnackBar y quedan en /login',
+    testWidgets('credenciales inválidas muestran modal de error y quedan en /login',
         (tester) async {
       await pumpAppWithDb(tester, db, autenticado: false);
 
       await ingresar(tester, 'Carlos', 'incorrecta');
 
       expect(find.byType(LoginScreen), findsOneWidget);
-      expect(find.text('Usuario o contraseña incorrectos'), findsOneWidget);
+      expect(find.byType(AlertDialog), findsOneWidget);
+      expect(find.text('Credenciales incorrectas'), findsOneWidget);
+      expect(
+        find.text('Usuario o contraseña incorrectos. Intentá de nuevo.'),
+        findsOneWidget,
+      );
 
-      await tester.pump(const Duration(seconds: 4));
+      await tester.tap(find.text('Intentar de nuevo'));
       await tester.pumpAndSettle();
+      expect(find.byType(AlertDialog), findsNothing);
+      expect(find.byType(LoginScreen), findsOneWidget);
     });
 
     testWidgets('ambos campos vacíos muestran ambos mensajes sin SnackBar',
@@ -71,7 +78,9 @@ void main() {
 
       expect(find.text('Ingresá tu usuario'), findsOneWidget);
       expect(find.text('Ingresá tu contraseña'), findsOneWidget);
-      expect(find.text('Usuario o contraseña incorrectos'), findsNothing);
+      expect(find.text('Usuario o contraseña incorrectos. Intentá de nuevo.'),
+          findsNothing);
+      expect(find.byType(AlertDialog), findsNothing);
       expect(find.byType(LoginScreen), findsOneWidget);
     });
 
@@ -88,7 +97,9 @@ void main() {
 
       expect(find.text('Ingresá tu usuario'), findsOneWidget);
       expect(find.text('Ingresá tu contraseña'), findsNothing);
-      expect(find.text('Usuario o contraseña incorrectos'), findsNothing);
+      expect(find.text('Usuario o contraseña incorrectos. Intentá de nuevo.'),
+          findsNothing);
+      expect(find.byType(AlertDialog), findsNothing);
     });
 
     testWidgets('contraseña vacía muestra mensaje en su campo sin SnackBar',
@@ -101,7 +112,9 @@ void main() {
 
       expect(find.text('Ingresá tu contraseña'), findsOneWidget);
       expect(find.text('Ingresá tu usuario'), findsNothing);
-      expect(find.text('Usuario o contraseña incorrectos'), findsNothing);
+      expect(find.text('Usuario o contraseña incorrectos. Intentá de nuevo.'),
+          findsNothing);
+      expect(find.byType(AlertDialog), findsNothing);
     });
 
     testWidgets('el toggle alterna la visibilidad de la contraseña',
