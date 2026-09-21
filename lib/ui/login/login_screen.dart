@@ -36,18 +36,37 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     return null;
   }
 
-  void _ingresar() {
+  Future<void> _ingresar() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     final ok = ref
         .read(authProvider.notifier)
         .login(_usuarioController.text.trim(), _passwordController.text);
     if (!ok) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Usuario o contraseña incorrectos')),
-      );
+      await _mostrarErrorCredenciales(context);
       return;
     }
     context.go('/listas');
+  }
+
+  Future<void> _mostrarErrorCredenciales(BuildContext context) {
+    final theme = Theme.of(context);
+    return showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        icon: Icon(Icons.error_outline, color: theme.colorScheme.error, size: 40),
+        title: const Text('Credenciales incorrectas'),
+        content: const Text(
+          'Usuario o contraseña incorrectos. Intentá de nuevo.',
+          textAlign: TextAlign.center,
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Intentar de nuevo'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
